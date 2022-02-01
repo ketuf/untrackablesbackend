@@ -14,33 +14,83 @@ class ProfileFollowingController extends ResourceController {
 		final decryptorQuery = Query<Chatter>(context)
 			..where((i) => i.id).equalTo(request!.authorization!.ownerID);
 		final decryptor = await decryptorQuery.fetchOne();
-		final JwtClaim claim = verifyJwtHS256Signature(jwt, decryptor!.secret!);		
+		final JwtClaim claim = verifyJwtHS256Signature(jwt, decryptor!.secret!);
 		final chatterQuery = Query<Chatter>(context)
-			..where((i) => i.qrId).equalTo(claim['id']!);
+			..where((i) => i.qrId).equalTo(claim['id']! as String);
 		final chatter = await chatterQuery.fetchOne();
 		final followerQuery = Query<Following>(context)
-			..where((i) => i.follower!.id).equalTo(chatter?.id);
+			..where((i) => i.follower?.id).equalTo(chatter?.id);
 		final followers = await followerQuery.fetch();
-		List<ProfileFollow> pefw = [];
-		for (Following following in followers) {
-			final doesFollowDecryptorQuery = Query<Following>(context)
-				..where((i) => i.chatter!.id).equalTo(request!.authorization!.ownerID)
-				..where((i) => i.follower!.id).equalTo(following.follower!.id);
-			final doesFollowDecryptor = await doesFollowDecryptorQuery.fetchOne();
-			final doesDecryptorFollowQuery = Query<Following>(context)
-				..where((i) => i.follower!.id).equalTo(request!.authorization!.ownerID)
-				..where((i) => i.chatter!.id).equalTo(following.follower!.id);
-			final doesDecryptorFollow = await doesDecryptorFollowQuery.fetchOne();
-			final nicknameQuery = Query<Chatter>(context)
-				..where((i) => i.id).equalTo(following?.chatter?.id);
-			final nickname = await nicknameQuery.fetchOne();
-			if (doesFollowDecryptor == null && doesDecryptorFollow == null) {
-				pefw.add(ProfileFollow(mutual: false, nickname: nickname!.nickname!));
+
+		final chattersJwtFollows = followers.map((f) => f.chatter?.id!).toList();
+		final allQuery = Query<Following>(context);
+		final List<Following> all = await allQuery.fetch();
+		final Map<int, bool> maschap = Map();
+		for (Following f in followers) {
+			maschap[f.id!] = false;
+		}
+		for (Following flws in all.where((a) => chattersJwtFollows.contains(a.chatter?.id!))) {
+			if (maschap.containsKey(flws.id!)) {
+					if(flws.chatter?.id == request!.authorization?.ownerID || flws.follower?.id == request!.authorization?.ownerID) {
+							maschap[flws.id!] = true;
+					} else {
+						maschap[flws.id!] = false;
+					}
 			} else {
-				pefw.add(ProfileFollow(mutual: true, nickname: nickname!.nickname!));
+					if(all.where((e) => e.chatter?.id == flws.chatter?.id && e.follower?.id == chatter?.id).isNotEmpty) {
+						Following flwid = all.singleWhere((e) => e.chatter?.id == flws.chatter?.id  && e.follower?.id == chatter?.id);
+						if (maschap.containsKey(flwid.id!)) {
+								maschap[flwid.id!] = true;
+						}
+						if (all.where((e) => e.chatter?.id == flws.follower?.id && e.follower?.id == chatter?.id).isNotEmpty) {
+						Following flwid = all.singleWhere((e) => e.chatter?.id == flws.follower?.id && e.follower?.id == chatter?.id);
+						if (maschap.containsKey(flwid.id!)) {
+								maschap[flwid.id!] = true;
+						}
+					}
+				}
 			}
 		}
+		for (Following flws in all.where((a) => chattersJwtFollows.contains(a.follower?.id))) {
+			print('flwsid');
+			print(flws.id);
+				if (maschap.containsKey(flws.id!)) {
+						if(flws.chatter?.id == request!.authorization?.ownerID || flws.follower?.id == request!.authorization?.ownerID) {
+								maschap[flws.id!] = true;
+						} else {
+							maschap[flws.id!] = false;
+						}
+				} else {
+					print('gothereeeeee');
+					print(flws.follower?.id);
+						if(all.where((e) => e.chatter?.id == flws.chatter?.id && e.follower?.id == chatter?.id).isNotEmpty) {
+							Following flwid = all.singleWhere((e) => e.chatter?.id == flws.chatter?.id  && e.follower?.id == chatter?.id);
+							if (maschap.containsKey(flwid.id!)) {
+									maschap[flwid.id!] = true;
+							}
+						}
+						if (all.where((e) => e.follower?.id == chatter?.id && e.chatter?.id == flws.follower?.id).isNotEmpty) {
+							print('gaschathescheresche');
+							Following flwid = all.singleWhere((e) => e.follower?.id == chatter?.id && e.chatter?.id == flws.follower?.id);
+							if (maschap.containsKey(flwid.id!)) {
+								print('komopdan');
+									maschap[flwid.id!] = true;
+							}
+						}
+				}
+		}
+		List<ProfileFollow> pefw = [];
+		for (int key in maschap.keys) {
+			Following flwg = all.singleWhere((e) => e.id! == key);
+			final nicknameQuery = Query<Chatter>(context)
+				..where((i) => i.id).equalTo(flwg.chatter?.id!);
+			final nickname = await nicknameQuery.fetchOne();
+			final claim = JwtClaim(otherClaims: <String, String>{
+				'id': nickname!.qrId!
+			});
+			final token = issueJwtHS256(claim, decryptor.secret!);
+			pefw.add(ProfileFollow(mutual: maschap[key]!, nickname: nickname.nickname!, encryptedId: token));
+		}
 		return Response.ok(json.encode(pefw.map((x) => x.toJson()).toList()));
-
 	}
 }

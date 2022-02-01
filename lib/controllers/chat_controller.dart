@@ -9,10 +9,10 @@ class ChatController extends ResourceController {
 	ManagedContext context;
 	ChatController(this.context);
 
-	@Operation.post() 
+	@Operation.post()
 	Future<Response> fetchMessage() async {
 		final Map<String, dynamic> body = await request!.body.decode();
-		final message = body['message'];
+		final message = body['message'] as String;
 		if(message.isEmpty) {
 			return Response.badRequest(body: {
 				"error": "cannot send empty message"
@@ -21,8 +21,8 @@ class ChatController extends ResourceController {
 		final fromChatterQuery = Query<Chatter>(context)
 			..where((i) => i.id).equalTo(request!.authorization!.ownerID);
 		final fromChatter = await fromChatterQuery.fetchOne();
-		final JwtClaim claim = verifyJwtHS256Signature(body['to'], fromChatter!.secret!);
-		final to = claim['id'];
+		final JwtClaim claim = verifyJwtHS256Signature(body['to'] as String, fromChatter!.secret!);
+		final to = claim['id'] as String;
 		final toChatterQuery = Query<Chatter>(context)
 			..where((i) => i.qrId).equalTo(to);
 		final toChatter = await toChatterQuery.fetchOne();
@@ -33,7 +33,7 @@ class ChatController extends ResourceController {
 			..values.value = message;
 		final mesches = await msg.insert();
 		return Response.ok("");
-	}	
+	}
 	@Operation.get('to')
 	Future<Response> getMessages(@Bind.path('to') String to) async {
 		final decryptorQuery = Query<Chatter>(context)

@@ -10,6 +10,10 @@ import 'package:backend/controllers/following_controller.dart';
 import 'package:backend/controllers/chat_controller.dart';
 import 'package:backend/controllers/profile_controller.dart';
 import 'package:backend/controllers/profile_following_controller.dart';
+import 'package:backend/controllers/profile_followers_controller.dart';
+import 'package:backend/controllers/conversations_controller.dart';
+import 'package:backend/controllers/stream_controller.dart';
+import 'package:backend/controllers/likes_controller.dart';
 /// This type initializes an application.
 ///
 /// Override methods in this class to set up routes and initialize services like
@@ -81,7 +85,23 @@ class BackendChannel extends ApplicationChannel {
 	.link(() => Authorizer.bearer(authServer!))
 	?.link(() => ProfileFollowingController(context!));
 
-	
+	router.route('/profile_followers/[:jwt]')
+	.link(() => Authorizer.bearer(authServer!))
+	?.link(() => ProfileFollowersController(context!));
+
+	router.route('/conversations')
+	.link(() => Authorizer.bearer(authServer!))
+	?.link(() => ConversationsController(context!));
+
+	router.route('/stream')
+	.link(() => Authorizer.bearer(authServer!))
+	?.link(() => StreamController(context!));
+
+	router.route('/likes/[:id]')
+		.link(() => Authorizer.bearer(authServer!))
+		?.link(() => LikesController(context!));
+
+
     return router;
   }
 }

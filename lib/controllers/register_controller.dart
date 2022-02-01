@@ -1,5 +1,5 @@
 import 'package:backend/backend.dart';
-import 'package:backend/models/config.dart';	
+import 'package:backend/models/config.dart';
 import 'package:backend/models/chatter.dart';
 import 'package:regexed_validator/regexed_validator.dart';
 import 'package:jaguar_jwt/jaguar_jwt.dart';
@@ -11,7 +11,7 @@ import 'package:conduit/conduit.dart';
 class RegisterController extends ResourceController {
 	SmtpServer? smtp;
 	RegisterController(this.context, this.config, this.authServer) {
-	    smtp = SmtpServer(config!.host!, port: config!.port!, username: config!.username, password: config!.password);		
+	    smtp = SmtpServer(config!.host!, port: config!.port!, username: config!.username, password: config!.password);
 	}
 	final ManagedContext context;
 	final Config config;
@@ -34,19 +34,19 @@ class RegisterController extends ResourceController {
 			..values.qrId = randomAlphaNumeric(40)
 			..values.secret = randomAlphaNumeric(10)
 			..values.salt = salt
-			..values.hashedPassword = authServer.hashPassword(password, salt); 
-			
+			..values.hashedPassword = authServer.hashPassword(password, salt);
+
 		final inserted = await chatter.insert();
 		final claim = JwtClaim(otherClaims: <String, int>{
 			'id': inserted.id!
 		});
 		final token = issueJwtHS256(claim, config.secret!);
-		final message = Message()
-			..from = Address(config.username!, '(un)trackabl.es')
-			..recipients.add(inserted.username)
-			..subject = "Please confirm your e-mail"
-			..text = "Could you press on the following link to confirm your e-mail\nhttp://localhost:4200/confirm/$token";
-		await send(message, smtp!);
+		// final message = Message()
+		// 	..from = Address(config.username!, '(un)trackabl.es')
+		// 	..recipients.add(inserted.username)
+		// 	..subject = "Please confirm your e-mail"
+		// 	..text = "Could you press on the following link to confirm your e-mail\nhttp://localhost:4200/confirm/$token";
+		// await send(message, smtp!);
 		return Response.ok("");
 	}
 	@Operation.post('token')

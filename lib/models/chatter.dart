@@ -1,12 +1,15 @@
 import 'package:backend/backend.dart';
-import 'package:conduit/managed_auth.dart';
 import 'package:backend/models/following.dart';
 import 'package:backend/models/message.dart';
 import 'package:backend/models/like.dart';
-class Chatter extends ManagedObject<_Chatter> implements _Chatter, ManagedAuthResourceOwner<_Chatter> {}
-
-class _Chatter extends ResourceOwnerTableDefinition {
-	@Serialize(input: true, output: false)
+import 'package:backend/models/comment.dart';
+class Chatter extends ManagedObject<_Chatter> implements _Chatter {}
+class _Chatter {
+	@Column(primaryKey: true)
+	String? id;
+	@Column(unique: true)
+	String? email;
+	@Column()
 	String? password;
 	@Column(unique: true)
 	String? nickname;
@@ -19,8 +22,6 @@ class _Chatter extends ResourceOwnerTableDefinition {
 	@Column(defaultValue: 'false')
 	bool? isConfirmedPhonenumber;
 	@Column()
-	String? qrId;
-	@Column()
 	String? secret;
 	ManagedSet<Following>? following;
 
@@ -29,4 +30,5 @@ class _Chatter extends ResourceOwnerTableDefinition {
 	ManagedSet<Message>? fromMessages;
 	ManagedSet<Message>? toMessages;
 	ManagedSet<Like>? likes;
+	ManagedSet<Comment>? comments;
 }

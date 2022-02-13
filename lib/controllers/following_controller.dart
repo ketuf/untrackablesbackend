@@ -6,13 +6,15 @@ import 'package:backend/models/follower.dart';
 import 'package:jaguar_jwt/jaguar_jwt.dart';
 import 'dart:convert';
 import 'package:tuple/tuple.dart';
-
+import 'package:backend/helpers/extract_token.dart';
 class FollowingController extends ResourceController {
 	ManagedContext context;
-	FollowingController(this.context);
+	String secret;
+	FollowingController(this.context, this.secret);
 
 	@Operation.post('id')
 	Future<Response> follow(@Bind.path('id') String id) async {
+		final ischid = extractToken(request!.raw.headers.value("x-api-key")!, secret);
 		final Map<String, dynamic> body = await request!.body.decode();
 		if(body['nickname'] == null) {
 			return Response.badRequest(body: {
@@ -20,11 +22,11 @@ class FollowingController extends ResourceController {
 			});
 		}
 		final chatterQuery = Query<Chatter>(context)
-			..where((i) => i.qrId).equalTo(id);
+			..where((i) => i.id).equalTo(id);
 		final chatter = await chatterQuery.fetchOne();
 		print(chatter?.id);
 		final followerQuery = Query<Chatter>(context)
-			..where((i) => i.id).equalTo(request?.authorization?.ownerID);
+			..where((i) => i.id).equalTo(ischid);
 		final follower = await followerQuery.fetchOne();
 		print(follower?.id);
 		final query = Query<Following>(context)
@@ -41,7 +43,7 @@ class FollowingController extends ResourceController {
 	@Operation.get('id')
 	Future<Response> followers(@Bind.path('id') String id) async {
 		final chatterQuery = Query<Chatter>(context)
-				..where((i) => i.qrId).equalTo(id);
+				..where((i) => i.id).equalTo(id);
 		final chatter = await chatterQuery.fetchOne();
 		final followingQuery = Query<Following>(context)
 			..where((i) => i.chatter?.id).equalTo(chatter?.id);
@@ -52,7 +54,7 @@ class FollowingController extends ResourceController {
 				..where((i) => i.id).equalTo(follower.follower?.id);
 			final foscholloschowescher = await foscholloschowescherQuery.fetchOne();
 			final claim = JwtClaim(otherClaims: <String, String>{
-				'id': foscholloschowescher!.qrId!
+				'id': foscholloschowescher!.id!
 			});
 			final token = issueJwtHS256(claim, chatter!.secret!);
 			final innerFollowersQuery = Query<Following>(context)
@@ -71,11 +73,12 @@ class FollowingController extends ResourceController {
 	}
 	@Operation.get()
 	Future<Response> following() async {
+		final ischid = extractToken(request!.raw.headers.value("x-api-key")!, secret);
 		final followingQuery = Query<Following>(context)
-			..where((i) => i.follower?.id).equalTo(request!.authorization!.ownerID);
+			..where((i) => i.follower?.id).equalTo(ischid);
 		final List<Following> follow_ing = await followingQuery.fetch();
 		final chaschatQuery = Query<Chatter>(context)
-			..where((i) => i.id).equalTo(request!.authorization!.ownerID);
+			..where((i) => i.id).equalTo(ischid);
 		final chaschat = await chaschatQuery.fetchOne();
 		List<Follower> flws = [];
 		for (Following follower in follow_ing) {
@@ -83,7 +86,7 @@ class FollowingController extends ResourceController {
 				..where((i) => i.id).equalTo(follower.chatter?.id);
 			Chatter? chatter = await chatterQuery.fetchOne();
 			final claim = JwtClaim(otherClaims: <String, String>{
-				'id': chatter!.qrId!
+				'id': chatter!.id!
 			});
 			final String token = issueJwtHS256(claim, chaschat!.secret!);
 			final innerFollowersQuery = Query<Following>(context)

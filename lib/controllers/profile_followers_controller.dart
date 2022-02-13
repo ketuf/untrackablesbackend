@@ -5,18 +5,21 @@ import 'dart:async';
 import 'package:jaguar_jwt/jaguar_jwt.dart';
 import 'package:backend/models/profile_follow.dart';
 import 'dart:convert';
+import 'package:backend/helpers/extract_token.dart';
 class ProfileFollowersController extends ResourceController {
   ManagedContext context;
-  ProfileFollowersController(this.context);
+  String secret;
+  ProfileFollowersController(this.context, this.secret);
 
   @Operation.get('jwt')
   Future<Response> getProfileFollowers(@Bind.path('jwt') String jwt) async {
+    final ischid = extractToken(request!.raw.headers.value("x-api-key")!, secret);
     final decryptorQuery = Query<Chatter>(context)
-      ..where((i) => i.id).equalTo(request!.authorization!.ownerID!);
+      ..where((i) => i.id).equalTo(ischid);
     final decryptor = await decryptorQuery.fetchOne();
     final JwtClaim claim = verifyJwtHS256Signature(jwt, decryptor!.secret!);
     final chatterQuery = Query<Chatter>(context)
-      ..where((i) => i.qrId).equalTo(claim['id']! as String);
+      ..where((i) => i.id).equalTo(claim['id']! as String);
     final chatter = await chatterQuery.fetchOne();
     final followingQuery = Query<Following>(context)
       ..where((i) => i.chatter?.id).equalTo(chatter?.id);
@@ -31,7 +34,7 @@ class ProfileFollowersController extends ResourceController {
     }
     for (Following flws in all.where((a) => chattersJwtFollowing.contains(a.follower?.id))) {
       if (maschap.containsKey(flws.id!)) {
-        if(flws.chatter?.id == request!.authorization?.ownerID || flws.follower?.id == request!.authorization?.ownerID) {
+        if(flws.chatter?.id == ischid || flws.follower?.id == ischid) {
             maschap[flws.id!] = true;
         } else {
           maschap[flws.id!] = false;
@@ -53,7 +56,7 @@ class ProfileFollowersController extends ResourceController {
     }
     for (Following flws in all.where((a) => chattersJwtFollowing.contains(a.chatter?.id)))
     if (maschap.containsKey(flws.id!)) {
-      if(flws.chatter?.id == request!.authorization?.ownerID || flws.follower?.id == request!.authorization?.ownerID) {
+      if(flws.chatter?.id == request!.authorization?.ownerID || flws.follower?.id == ischid) {
           maschap[flws.id!] = true;
       } else {
         maschap[flws.id!] = false;
@@ -79,10 +82,10 @@ class ProfileFollowersController extends ResourceController {
         ..where((i) => i.id).equalTo(flwg.follower?.id!);
       final nickname = await nicknameQuery.fetchOne();
 	  final claim = JwtClaim(otherClaims: <String, String>{
-		'id': nickname!.qrId!
+		'id': nickname!.id!
 	  });
 	  final token = issueJwtHS256(claim, decryptor.secret!);
-      pefw.add(ProfileFollow(mutual: maschap[key]!, nickname: nickname!.nickname!, encryptedId: token));
+      pefw.add(ProfileFollow(mutual: maschap[key]!, nickname: nickname.nickname!, encryptedId: token));
     }
     return Response.ok(json.encode(pefw.map((x) => x.toJson()).toList()));
   }

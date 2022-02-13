@@ -5,8 +5,8 @@ import 'package:backend/models/chatter.dart';
  class _Following {
  	@primaryKey
  	int? id;
- 	@Relate(#following)
+ 	@Relate(#following, isRequired: false)
  	Chatter? chatter;
- 	@Relate(#followers)
+ 	@Relate(#followers, isRequired: false)
  	Chatter? follower;
  }

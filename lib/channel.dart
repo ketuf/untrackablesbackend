@@ -4,7 +4,6 @@ import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:backend/models/config.dart';
 import 'package:backend/models/chatter.dart';
-import 'package:conduit/managed_auth.dart';
 import 'package:backend/controllers/chatter_controller.dart';
 import 'package:backend/controllers/following_controller.dart';
 import 'package:backend/controllers/chat_controller.dart';
@@ -14,6 +13,10 @@ import 'package:backend/controllers/profile_followers_controller.dart';
 import 'package:backend/controllers/conversations_controller.dart';
 import 'package:backend/controllers/stream_controller.dart';
 import 'package:backend/controllers/likes_controller.dart';
+import 'package:backend/controllers/login_controller.dart';
+import 'package:backend/controllers/block_controller.dart';
+import 'package:backend/models/comment.dart';
+import 'package:backend/controllers/comments_controller.dart';
 /// This type initializes an application.
 ///
 /// Override methods in this class to set up routes and initialize services like
@@ -22,7 +25,6 @@ class BackendChannel extends ApplicationChannel {
 	ManagedContext? context;
 	SmtpServer? smtp;
 	Config? config;
-	AuthServer? authServer;
   /// Initialize services in this method.
   ///
   /// Implement this method to initialize services, read values from [options]
@@ -35,12 +37,10 @@ class BackendChannel extends ApplicationChannel {
         (rec) => print("$rec ${rec.error ?? ""} ${rec.stackTrace ?? ""}"));
     final dataModel = ManagedDataModel.fromCurrentMirrorSystem();
     final presistanceStore = PostgreSQLPersistentStore.fromConnectionInfo(
-    	'noah', 'noschoaschah', '127.0.0.1', 5432, 'uschun'
+    	'uschun', 'mypassword', '127.0.0.1', 5432, 'untrack'
     );
     context = ManagedContext(dataModel, presistanceStore);
     config = Config(options!.configurationFilePath!);
-    final authStorage = ManagedAuthDelegate<Chatter>(context);
-    authServer = AuthServer(authStorage);
   }
 
   /// Construct the request channel.
@@ -55,53 +55,30 @@ class BackendChannel extends ApplicationChannel {
 
     // Prefer to use `link` instead of `linkFunction`.
     // See: https://conduit.io/docs/http/request_controller/
-    router.route('/auth/token')
-    .link(() => AuthController(authServer!));
-
-    router.route("/example")
-    .linkFunction((request) async {
-      return Response.ok({"key": "value"});
-    });
     router.route('/register/[:token]')
-    .link(() => RegisterController(context!, config!, authServer!));
+    .link(() => RegisterController(context!, config!));
 
-	router.route('/chatter')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => ChatterController(context!));
+	router.route('/chatter').link(() => ChatterController(context!, config!.authSecret!));
 
-	router.route('/following/[:id]')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => FollowingController(context!));
+	router.route('/following/[:id]').link(() => FollowingController(context!, config!.authSecret!));
 
-	router.route('/chat/[:to]')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => ChatController(context!));
+	router.route('/chat/[:to]').link(() => ChatController(context!, config!.authSecret!));
 
-	router.route('/profile/[:jwt]')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => ProfileController(context!));
+	router.route('/profile/[:jwt]').link(() => ProfileController(context!, config!.authSecret!));
 
-	router.route('/profile_following/[:jwt]')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => ProfileFollowingController(context!));
+	router.route('/profile_following/[:jwt]').link(() => ProfileFollowingController(context!, config!.authSecret!));
 
-	router.route('/profile_followers/[:jwt]')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => ProfileFollowersController(context!));
+	router.route('/profile_followers/[:jwt]').link(() => ProfileFollowersController(context!, config!.authSecret!));
 
-	router.route('/conversations')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => ConversationsController(context!));
+	router.route('/conversations').link(() => ConversationsController(context!, config!.authSecret!));
 
-	router.route('/stream')
-	.link(() => Authorizer.bearer(authServer!))
-	?.link(() => StreamController(context!));
+	router.route('/stream').link(() => StreamController(context!, config!.authSecret!));
 
-	router.route('/likes/[:id]')
-		.link(() => Authorizer.bearer(authServer!))
-		?.link(() => LikesController(context!));
+	router.route('/likes/[:id]').link(() => LikesController(context!, config!.authSecret!));
 
-
+	router.route('/login').link(() => LoginController(context!, config!.authSecret!));
+	router.route('/block/[:jwt]').link(() => BlockController(context!, config!.authSecret!));
+	router.route('/comments/[:id]').link(() => CommentsController(context!, config!.authSecret!));
     return router;
   }
 }

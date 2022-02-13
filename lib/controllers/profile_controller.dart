@@ -9,17 +9,20 @@ import 'package:backend/models/following.dart';
 import 'package:backend/helpers/is_does_follow.dart';
 import 'package:tuple/tuple.dart';
 import 'package:backend/helpers/messages.dart';
+import 'package:backend/helpers/extract_token.dart';
 class ProfileController extends ResourceController {
 	ManagedContext context;
-	ProfileController(this.context);
+	String secret;
+	ProfileController(this.context, this.secret);
 	@Operation.get('jwt')
 	Future<Response> get(@Bind.path('jwt') String jwt) async {
+		final ischid = extractToken(request!.raw.headers.value("x-api-key")!, secret);
 		final decryptorQuery = Query<Chatter>(context)
-			..where((i) => i.id).equalTo(request!.authorization!.ownerID);
+			..where((i) => i.id).equalTo(ischid);
 		final decryptor = await decryptorQuery.fetchOne();
 		final qrId = verifyJwtHS256Signature(jwt, decryptor!.secret!);
 		final chatterQuery = Query<Chatter>(context)
-			..where((i) => i.qrId).equalTo(qrId['id'] as String);
+			..where((i) => i.id).equalTo(qrId['id'] as String);
 		final chatter = await chatterQuery.fetchOne();
 		final Tuple2<List<Message>, List<Message>> msgs = await getMessages(context, chatter!.id!);
 
@@ -30,12 +33,12 @@ class ProfileController extends ResourceController {
 				..where((i) => i.id).equalTo(incoming.from?.id!);
 			final from = await fromQuery.fetchOne();
 
-			Tuple2<bool, bool> isDoesFollowing = await isDoesFollow(context, from!.id!, request!.authorization!.ownerID!);
+			Tuple2<bool, bool> isDoesFollowing = await isDoesFollow(context, from!.id!, ischid);
 			if(!isDoesFollowing.item1 && !isDoesFollowing.item2) {
 				incomings.add(Msg(isMutual: false, value: incoming.value!, date: incoming.date!, toFrom: from.nickname!));
 			} else {
 				final claim = JwtClaim(otherClaims: <String, String>{
-					'id': from.qrId!
+					'id': from.id!
 				});
 				final token = issueJwtHS256(claim, decryptor.secret!);
 				incomings.add(Msg(
@@ -52,12 +55,12 @@ class ProfileController extends ResourceController {
 			final toQuery = Query<Chatter>(context)
 				..where((i) => i.id).equalTo(outgoing.to?.id!);
 			final to = await toQuery.fetchOne();
-			Tuple2<bool, bool> isDoesFollowing = await isDoesFollow(context, to!.id!, request!.authorization!.ownerID!);
+			Tuple2<bool, bool> isDoesFollowing = await isDoesFollow(context, to!.id!, ischid);
 			if(!isDoesFollowing.item1 && !isDoesFollowing.item2) {
 				outgoings.add(Msg(isMutual: false, value: outgoing.value!, date: outgoing.date!, toFrom: to.nickname! ));
 			} else {
 				final claim = JwtClaim(otherClaims: <String, String>{
-					'id': to.qrId!
+					'id': to.id!
 				});
 				final token = issueJwtHS256(claim, decryptor.secret!);
 				outgoings.add(Msg(
@@ -76,8 +79,9 @@ class ProfileController extends ResourceController {
 	}
 	@Operation.get()
 	Future<Response> getHome() async {
+		final ischid = extractToken(request!.raw.headers.value("x-api-key")!, secret);
 		final chatterQuery = Query<Chatter>(context)
-			..where((i) => i.id).equalTo(request!.authorization!.ownerID);
+			..where((i) => i.id).equalTo(ischid);
 		final chatter = await chatterQuery.fetchOne();
 		Tuple2<List<Message>, List<Message>> msgs = await getMessages(context, chatter!.id!);
 		List<Msg> incomings = [];
@@ -86,7 +90,7 @@ class ProfileController extends ResourceController {
 				..where((i) => i.id).equalTo(incoming.from?.id);
 			final from = await fromQuery.fetchOne();
 			final claim = JwtClaim(otherClaims: <String, String>{
-				'id': from!.qrId!
+				'id': from!.id!
 			});
 			final token = issueJwtHS256(claim, chatter.secret!);
 			incomings.add(Msg(encryptedId: token, value: incoming.value!, date: incoming.date!, toFrom: from.nickname));
@@ -97,7 +101,7 @@ class ProfileController extends ResourceController {
 				..where((i) => i.id).equalTo(outgoing.to?.id);
 			final to = await toQuery.fetchOne();
 			final claim = JwtClaim(otherClaims: <String, String>{
-				'id': to!.qrId!
+				'id': to!.id!
 			});
 			final token = issueJwtHS256(claim, chatter.secret!);
 			outgoings.add(Msg(encryptedId: token, value: outgoing.value!, date: outgoing.date!, toFrom: to.nickname));

@@ -1,5 +1,6 @@
 class MsgStream {
-  bool isUs;
+  bool isFromMe;
+  bool isToMe;
   bool isFromMutual;
   bool isToMutual;
   int msgId;
@@ -10,7 +11,8 @@ class MsgStream {
   String value;
   DateTime date;
   MsgStream({
-    required this.isUs,
+    required this.isFromMe,
+    required this.isToMe,
     required this.isFromMutual,
     required this.isToMutual,
     required this.msgId,
@@ -22,7 +24,8 @@ class MsgStream {
     required this.date
   });
   Map<String, dynamic> toJson() => {
-    'isUs': isUs,
+    'isToMe': isToMe,
+    'isFromMe': isFromMe,
     'isFromMutual': isFromMutual,
     'isToMutual': isToMutual,
     'msgId': msgId,

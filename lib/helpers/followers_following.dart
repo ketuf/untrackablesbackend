@@ -4,7 +4,7 @@ import 'package:tuple/tuple.dart';
 import 'dart:async';
 import 'package:backend/models/chatter.dart';
 
-Future<Tuple2<Following?, Following?>> isDoesFollow(ManagedContext context, int ourId) async {
+Future<Tuple2<Following?, Following?>> isDoesFollow(ManagedContext context, String ourId) async {
 	final isFollowedQuery = Query<Following>(context)
 		..where((i) => i.chatter?.id).equalTo(ourId);
 	final isFollowed = await isFollowedQuery.fetchOne();

@@ -8,14 +8,14 @@ import 'package:mailer/mailer.dart';
 import 'package:dbcrypt/dbcrypt.dart';
 import 'package:random_string/random_string.dart';
 import 'package:conduit/conduit.dart';
+import 'package:dbcrypt/dbcrypt.dart';
 class RegisterController extends ResourceController {
 	SmtpServer? smtp;
-	RegisterController(this.context, this.config, this.authServer) {
-	    smtp = SmtpServer(config!.host!, port: config!.port!, username: config!.username, password: config!.password);
+	RegisterController(this.context, this.config) {
+	    smtp = SmtpServer(config.host!, port: config.port!, username: config.username, password: config.password);
 	}
 	final ManagedContext context;
 	final Config config;
-	final AuthServer authServer;
 	@Operation.post()
 	Future<Response> createChatter() async {
 		final Map<String, dynamic> body = await request!.body.decode();
@@ -27,17 +27,15 @@ class RegisterController extends ResourceController {
 		if(!validator.password(password)) {
 			return Response.badRequest(body: { 'error': 'Your password is not strong enough'});
 		}
-		final salt = AuthUtility.generateRandomSalt();
 		final chatter = Query<Chatter>(context)
-			..values.username = email
+			..values.email = email
 			..values.nickname = body['nickname'] as String
-			..values.qrId = randomAlphaNumeric(40)
+			..values.id = randomAlphaNumeric(1000)
 			..values.secret = randomAlphaNumeric(10)
-			..values.salt = salt
-			..values.hashedPassword = authServer.hashPassword(password, salt);
+			..values.password = DBCrypt().hashpw(password, DBCrypt().gensalt());
 
 		final inserted = await chatter.insert();
-		final claim = JwtClaim(otherClaims: <String, int>{
+		final claim = JwtClaim(otherClaims: <String, String>{
 			'id': inserted.id!
 		});
 		final token = issueJwtHS256(claim, config.secret!);
@@ -55,15 +53,15 @@ class RegisterController extends ResourceController {
 		final id = claim['id'];
 		final chatter = Query<Chatter>(context)
 			..values.isConfirmedEmail = true
-			..where((i) => i.id).equalTo(id);
+			..where((i) => i.id).equalTo(id as String);
 		final updated = await chatter.updateOne();
 		return Response.ok("");
 	}
 	@Operation.put()
 	Future<Response> phonenumber() async {
 		final Map<String, dynamic> body = await request!.body.decode();
-		final JwtClaim claim = verifyJwtHS256Signature(body['token'], config.secret!);
-		final id = claim['id'];
+		final JwtClaim claim = verifyJwtHS256Signature(body['token'] as String, config.secret!);
+		final id = claim['id'] as String;
 		final confirmation = randomAlphaNumeric(4);
 		print(confirmation);
 		final query = Query<Chatter>(context)
@@ -85,7 +83,7 @@ class RegisterController extends ResourceController {
 	Future<Response> confirmPhonenumber(@Bind.path('token') String token) async {
 		final Map<String, dynamic> body = await request!.body.decode();
 		final JwtClaim claim = verifyJwtHS256Signature(token, config.secret!);
-		final id = claim['id'];
+		final id = claim['id'] as String;
 		final chatter = Query<Chatter>(context)
 			..where((i) => i.id).equalTo(id);
 		final chaschat = await chatter.fetchOne();

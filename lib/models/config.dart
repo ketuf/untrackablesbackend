@@ -6,5 +6,6 @@ class Config extends Configuration {
 	int? port;
 	String? username;
 	String? password;
-	String? secret; 
+	String? secret;
+	String? authSecret;
 }

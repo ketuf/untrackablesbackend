@@ -37,7 +37,7 @@ class BackendChannel extends ApplicationChannel {
         (rec) => print("$rec ${rec.error ?? ""} ${rec.stackTrace ?? ""}"));
     final dataModel = ManagedDataModel.fromCurrentMirrorSystem();
     final presistanceStore = PostgreSQLPersistentStore.fromConnectionInfo(
-    	'uschun', 'mypassword', '127.0.0.1', 5432, 'untrack'
+    	'doadmin', 'zwcztebSGvaxY8oP', 'db-postgresql-ams3-94883-do-user-7460943-0.b.db.ondigitalocean.com', 25060, 'untrack', useSSL: true
     );
     context = ManagedContext(dataModel, presistanceStore);
     config = Config(options!.configurationFilePath!);

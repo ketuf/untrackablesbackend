@@ -37,7 +37,7 @@ class BackendChannel extends ApplicationChannel {
         (rec) => print("$rec ${rec.error ?? ""} ${rec.stackTrace ?? ""}"));
     final dataModel = ManagedDataModel.fromCurrentMirrorSystem();
     final presistanceStore = PostgreSQLPersistentStore.fromConnectionInfo(
-	'dischig_user', 'paschas', 'localhost', 5432, 'dischig'
+    	'doadmin', '6T8EWmRBmyTObM2o', 'db-postgresql-ams3-01785-do-user-7460943-0.b.db.ondigitalocean.com', 25060, 'defaultdb', useSSL: true
     );
     context = ManagedContext(dataModel, presistanceStore);
     config = Config(options!.configurationFilePath!);
@@ -52,14 +52,11 @@ class BackendChannel extends ApplicationChannel {
   @override
   Controller get entryPoint {
     final router = Router();
-
+	7nD#+CsyjM[FBC!V
     // Prefer to use `link` instead of `linkFunction`.
     // See: https://conduit.io/docs/http/request_controller/
-	router.route('/example').linkFunction((request) async {
-		return Response.ok({"key": "value"});
-	});
-	    router.route('/register/[:token]')
-	    .link(() => RegisterController(context!, config!));
+    router.route('/register/[:token]')
+    .link(() => RegisterController(context!, config!));
 
 	router.route('/chatter').link(() => ChatterController(context!, config!.authSecret!));
 

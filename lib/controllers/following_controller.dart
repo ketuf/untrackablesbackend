@@ -15,12 +15,6 @@ class FollowingController extends ResourceController {
 	@Operation.post('id')
 	Future<Response> follow(@Bind.path('id') String id) async {
 		final ischid = extractToken(request!.raw.headers.value("x-api-key")!, secret);
-		final Map<String, dynamic> body = await request!.body.decode();
-		if(body['nickname'] == null) {
-			return Response.badRequest(body: {
-				"error": "please give the one you will follow a nickname"
-			});
-		}
 		final chatterQuery = Query<Chatter>(context)
 			..where((i) => i.id).equalTo(id);
 		final chatter = await chatterQuery.fetchOne();

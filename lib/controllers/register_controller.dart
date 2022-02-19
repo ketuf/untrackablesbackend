@@ -30,7 +30,7 @@ class RegisterController extends ResourceController {
 		final chatter = Query<Chatter>(context)
 			..values.email = email
 			..values.nickname = body['nickname'] as String
-			..values.id = randomAlphaNumeric(1000)
+			..values.id = randomAlphaNumeric(500)
 			..values.secret = randomAlphaNumeric(10)
 			..values.password = DBCrypt().hashpw(password, DBCrypt().gensalt());
 

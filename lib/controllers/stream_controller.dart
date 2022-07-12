@@ -116,11 +116,13 @@ class StreamController extends ResourceController {
         }
         final ischin = await Future.wait(incoming.map((x) async =>  x.then((i) => i)).toList());
         ischin.sort((a, b) => a.date.compareTo(b.date));
+        final reschetIschin = ischin.where((element) => DateTime.parse(element.date).isAfter(DateTime.now().subtract(Duration(days: 1))));
         final oschout = await Future.wait(outgoing.map((x) async => x.then((i) => i)).toList());
+        final reschetOschout = oschout.where((element) => DateTime.parse(element.date).isAfter(DateTime.now().subtract(Duration(days: 1))));
         oschout.sort((a, b) => a.date.compareTo(b.date));
         return Response.ok({
-          "incoming": json.encode(ischin.map((x) => x.toJson()).toList()),
-          "outgoing": json.encode(oschout.map((y) => y.toJson()).toList())
+          "incoming": json.encode(reschetIschin.map((x) => x.toJson()).toList()),
+          "outgoing": json.encode(reschetOschout.map((y) => y.toJson()).toList())
         });
   }
 }

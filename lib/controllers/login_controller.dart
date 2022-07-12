@@ -11,7 +11,7 @@ class LoginController extends ResourceController {
   Future<Response> login() async {
     final Map<String, dynamic> body = await request!.body.decode();
     final chatterQuery = Query<Chatter>(context)
-      ..where((c) => c.email).equalTo(body['email'] as String);
+      ..where((c) => c.nickname).equalTo(body['nickname'] as String);
     final chatter = await chatterQuery.fetchOne();
     if(chatter == null) {
       return Response.badRequest(body: {

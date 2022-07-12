@@ -8,4 +8,5 @@ class Config extends Configuration {
 	String? password;
 	String? secret;
 	String? authSecret;
+  String? bipapikey;
 }

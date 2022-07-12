@@ -152,6 +152,12 @@
       "languageVersion": "2.12"
     },
     {
+      "name": "dio",
+      "rootUri": "file:///home/noahbergh/.pub-cache/hosted/pub.dartlang.org/dio-4.0.6",
+      "packageUri": "lib/",
+      "languageVersion": "2.12"
+    },
+    {
       "name": "file",
       "rootUri": "file:///home/noahbergh/.pub-cache/hosted/pub.dartlang.org/file-6.1.2",
       "packageUri": "lib/",
@@ -470,7 +476,7 @@
       "languageVersion": "2.12"
     }
   ],
-  "generated": "2022-07-10T16:18:32.161987Z",
+  "generated": "2022-07-12T11:03:51.590956Z",
   "generator": "pub",
   "generatorVersion": "2.16.2"
 }

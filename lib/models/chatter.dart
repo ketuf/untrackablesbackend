@@ -7,8 +7,6 @@ class Chatter extends ManagedObject<_Chatter> implements _Chatter {}
 class _Chatter {
 	@Column(primaryKey: true)
 	String? id;
-	@Column(unique: true)
-	String? email;
 	@Column()
 	String? password;
 	@Column(unique: true)

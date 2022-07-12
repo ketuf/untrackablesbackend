@@ -9,6 +9,7 @@ dependencies:
   conduit: ^3.0.0
   cryptography: ^2.0.5
   dbcrypt: ^2.0.0
+  dio: ^4.0.6
   jaguar_jwt: ^3.0.0
   mailer: ^5.0.2
   mime: ^1.0.1

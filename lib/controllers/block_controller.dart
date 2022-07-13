@@ -44,7 +44,6 @@ class BlockController extends ResourceController {
     await deleteQuery.delete();
     final newChatterQuery = Query<Chatter>(context)
       ..values.id = randomAlphaNumeric(1000)
-      ..values.email = decryptor.email
       ..values.password = decryptor.password
       ..values.nickname = decryptor.nickname
       ..values.isConfirmedEmail = decryptor.isConfirmedEmail

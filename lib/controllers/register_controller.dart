@@ -11,9 +11,7 @@ import 'package:conduit/conduit.dart';
 import 'package:dbcrypt/dbcrypt.dart';
 import 'package:dio/dio.dart' as dio;
 class RegisterController extends ResourceController {
-	SmtpServer? smtp;
 	RegisterController(this.context, this.config) {
-	    smtp = SmtpServer(config.host!, port: config.port!, username: config.username, password: config.password, sec);
 	}
 	final ManagedContext context;
 	final Config config;
